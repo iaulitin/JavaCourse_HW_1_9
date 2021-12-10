@@ -3,9 +3,9 @@ import java.util.Iterator;
 public class GarriksLinkedList<T, E> implements LinkedListInterface<E>, Iterable<GarriksNode<T, E>> {
 
 
-    private final GarriksNode<T, E> head;
-    private final GarriksNode<T, E> tail;
-    private int len;
+    protected final GarriksNode<T, E> head;
+    protected final GarriksNode<T, E> tail;
+    protected int len;
 
     public GarriksLinkedList() {
         this.head = new GarriksNode<>(null, null, null);
@@ -30,12 +30,17 @@ public class GarriksLinkedList<T, E> implements LinkedListInterface<E>, Iterable
 
     @Override
     public boolean contains(Object o) {
-//        Возможно ли каким-либо образом подобное реализовать?
-//        if (o.getClass() != E) {
-//            return false;
-//        }
+
+        if (isEmpty()) {
+            return false;
+        }
 
         GarriksNode<T, E> currNode = head.getNext();
+
+        if (currNode.getItem().getClass() != o.getClass()) {
+            return false;
+        }
+
         while (currNode.getItem() != null && !currNode.getItem().equals(o)) {
             currNode = currNode.getNext();
         }
@@ -62,36 +67,12 @@ public class GarriksLinkedList<T, E> implements LinkedListInterface<E>, Iterable
         len++;
     }
 
-    // метод для добавления узла с ключом
-    public void addMap(T key, E element) {
-        for (GarriksNode<T, E> node : this) {
-            if (node.getKey().equals(key)) {
-                node.setItem(element);
-                node.setKey(key);
-                return;
-            }
-        }
-        GarriksNode<T, E> prevNode = tail.getPrev();
-        GarriksNode<T, E> newNode = new GarriksNode<>(element, key, tail, prevNode);
-        prevNode.setNext(newNode);
-        tail.setPrev(newNode);
-        len++;
-    }
 
     @Override
     public E get(int index) {
         return getNode(index).getItem();
     }
 
-    // получение элемента по ключу
-    public E getByKey(Object key) {
-        for (GarriksNode<T, E> node : this) {
-            if (node.getKey().equals(key)) {
-                return node.getItem();
-            }
-        }
-        return null;
-    }
 
     @Override
     public int indexOf(Object o) {
@@ -124,7 +105,10 @@ public class GarriksLinkedList<T, E> implements LinkedListInterface<E>, Iterable
 
     @Override
     public boolean remove(Object o) {
-        GarriksNode<T, E> currItem = getNode(indexOf(o));
+        GarriksNode<T, E> currItem = getNode(o);
+        if (currItem.equals(tail) || currItem.equals(head)) {
+            return false;
+        }
         GarriksNode<T, E> prevItem = currItem.getPrev();
         GarriksNode<T, E> nextItem = currItem.getNext();
         prevItem.setNext(nextItem);
@@ -135,7 +119,6 @@ public class GarriksLinkedList<T, E> implements LinkedListInterface<E>, Iterable
 
     @Override
     public void clear() {
-        // я же правильно понимаю, что при отсутствии ссылок на объекты (в данном случае ссылок на узлы) эти объекты удаляются из памяти, поэтому можно просто создань новые голову и хвост
         head.setNext(tail);
         tail.setPrev(head);
         len = 0;
@@ -145,9 +128,9 @@ public class GarriksLinkedList<T, E> implements LinkedListInterface<E>, Iterable
         return new GarriksLinkedListIterator<>(this);
     }
 
-    private GarriksNode<T, E> getNode(int index) {
+    protected GarriksNode<T, E> getNode(int index) {
         if (index >= len || index < 0) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException(String.format("Attempt to get the index %d, in range 0..%d", index, len));
         }
         GarriksNode<T, E> currNode = head;
         for (int i = 0; i < index + 1; i++) {
@@ -156,20 +139,30 @@ public class GarriksLinkedList<T, E> implements LinkedListInterface<E>, Iterable
         return currNode;
     }
 
-    public T getKey(int index) {
-        return getNode(index).getKey();
+    protected GarriksNode<T, E> getNode(Object o) {
+        GarriksNode<T, E> currNode = head;
+        for (int i = 0; i < len; i++) {
+            if (currNode.getItem().equals(o)) {
+                return currNode;
+            }
+            currNode = currNode.getNext();
+        }
+        return currNode;
     }
+
+
 
     @Override
     public String toString() {
         GarriksNode<T, E> currElem = head;
-        String result = "head -> ";
+        StringBuilder result = new StringBuilder("head <-> ");
         for (int i = 0; i < len; i++) {
             currElem = currElem.getNext();
-            result = new String(result + currElem.getItem() + " -> ");
+            result.append(currElem.getItem()).append(" <-> ");
         }
-        result = new String(result + "tail");
-        return result;
+        result.append("tail");
+
+        return result.toString();
     }
 
 }
